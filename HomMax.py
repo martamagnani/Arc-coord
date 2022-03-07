@@ -46,8 +46,21 @@ def Stand5uple(A,B,C,D,E):    #returns M1,M2 where (infty,0,Id,diag, M1/M2) is t
     #print(Q@la.inv(sqrtmatrix(X))@Y@la.inv(sqrtmatrix(X))@Q.T)
     return P@la.inv(sqrtmatrix(X))@Z@la.inv(sqrtmatrix(X))@P.T,Q@la.inv(sqrtmatrix(X))@Z@la.inv(sqrtmatrix(X))@Q.T
 
-def multmat(B1,B2,B3,B4,C1,C2,C3,C4): # given blocks of two matrices, retunrs blocks of the matrix obtained by multiplying them
+def multmat(B1,B2,B3,B4,C1,C2,C3,C4): #given blocks of two matrices,retunrs blocks of the matrix obtained by multiplying them
     return B1@C1+B2@C3,B1@C2+B2@C4,B3@C1+B4@C3,B3@C2+B4@C4
+
+def conj(A,B): #takes map in PSP(4,R) fixing A,B and returns blocks of g wehere g| ghg^{-1} fixes 0,infty
+    Id=np.identity(2) 
+    M=la.inv(A-B)
+    return M,Id-M@A,-Id,A  #now ghg^{-1} has the diagonal form
+
+def checkflip(M): #takes g 4x4 matrix \in Stab(0,infty) and checks if flips (detA>0 or <0)
+    d=M[0][0]*M[0][1]-M[1][0]*M[1][1]
+    if d>0:
+        return 1
+    if d<0:
+        return -1
+
 
 def mappa(A1,B1,C1,D1,E1,A2,B2,C2,D2,E2):  #Finds blocks of matrix in Sp4 sending A1,...E1 to A2,...E2
     X1=la.inv(A1-C1)-la.inv(A1-B1)
@@ -79,8 +92,7 @@ def mappa(A1,B1,C1,D1,E1,A2,B2,C2,D2,E2):  #Finds blocks of matrix in Sp4 sendin
         H4=la.inv(A2-B2)@la.inv(sqrtmatrix(X2))@Q2.T
         return multmat(H1,H2,H3,H4,R1,R2,R3,R4)       #note first the H matrix
     
-    
-def prova(A1,B1,C1,D1,E1,A2,B2,C2,D2,E2):  
+def prova(A1,B1,C1,D1,E1,A2,B2,C2,D2,E2):  #finds blocks of four matrices obtained by calculations IPad
     X1=la.inv(A1-C1)-la.inv(A1-B1)
     Y1=la.inv(A1-D1)-la.inv(A1-B1)
     P1,Q1=diagonalizing_mat(la.inv(sqrtmatrix(X1))@Y1@la.inv(sqrtmatrix(X1)))
@@ -103,19 +115,13 @@ def prova(A1,B1,C1,D1,E1,A2,B2,C2,D2,E2):
     G2=(A2@la.inv(A2-B2)-Id)@la.inv(sqrtmatrix(X2))@Q2.T
     G3=sqrtmatrix(X2)@Q2.T
     G4=la.inv(A2-B2)@la.inv(sqrtmatrix(X2))@Q2.T
-    h1=multmat(H1,H2,H3,H4,R1,R2,R3,R4) 
+    h1=multmat(H1,H2,H3,H4,R1,R2,R3,R4)  #note first the H matrix
     h2=multmat(H1,H2,H3,H4,S1,S2,S3,S4) 
     h3=multmat(G1,G2,G3,G4,R1,R2,R3,R4) 
     h4=multmat(G1,G2,G3,G4,S1,S2,S3,S4)
-    print(la.det(h1[0]),la.det(h2[0]),la.det(h3[0]),la.det(h4[0]))
-    #M1=np.block([[h1[0],h1[1]],[h1[2],h1[3]]])
-    #M2=np.block([[h2[0],h2[1]],[h2[2],h2[3]]])
-    #M3=np.block([[h3[0],h3[1]],[h3[2],h3[3]]])
-    #M4=np.block([[h4[0],h4[1]],[h4[2],h4[3]]])
-    #print('M1=\n',M1)
-    #print('M2=\n',M2)
-    #print('M3=\n',M3)
-    #print('M4=\n',M4)
+    return h1,h2,h3,h4
+    
+    
     
 def conjugating_mat(M,N): #takes M,N symm of same ev returns P,Q in SO(2) and O(2)\SO(2) such that P@M@P.T=Q@M@Q.T=N
     P1,Q1=diagonalizing_mat(M)
@@ -235,19 +241,34 @@ P,Q=conjugating_mat(la.inv(sqrtmatrix(B))@C@la.inv(sqrtmatrix(B)),la.inv(sqrtmat
 A1=sqrtmatrix(G)@P@la.inv(sqrtmatrix(B))
 A2=sqrtmatrix(G)@Q@la.inv(sqrtmatrix(B))
 g1=np.block([[A1,np.zeros((2,2))],[np.zeros((2,2)),la.inv(A1.T)]])
-g2=np.block([[A2,np.zeros((2,2))],[np.zeros((2,2)),la.inv(A2.T)]])   
+g2=np.block([[A2,np.zeros((2,2))],[np.zeros((2,2)),la.inv(A2.T)]])    
 
 
 #Second generator
 
-H1,H2,H3,H4=mappa(D,Id,F,Z4,H,D,Id,A,Z1,C)
-h1=np.block([[H1,H2],[H3,H4]])
-#Q: what is h2 here? 
+M1,M2,M3,M4=prova(D,Id,F,Z4,H,D,Id,A,Z1,C)  #Ognuna sono i quattro blocchi di una matrice che manda (D,Id,F,Z4,H) in (D,Id,A,Z1,C) 
+H1=np.block([[M1[0],M1[1]],[M1[2],M1[3]]])   #coincideranno a due a due e saranno h1 e h2 
+H2=np.block([[M2[0],M2[1]],[M2[2],M2[3]]])
+H3=np.block([[M3[0],M3[1]],[M3[2],M3[3]]])
+H4=np.block([[M4[0],M4[1]],[M4[2],M4[3]]])
+bl=conj(Id,D)                                 #blocchi di una matrice g| ghg^{-1} fissa {0},infty} dove h fissa {Id,D}
+g=np.block([[bl[0],bl[1]],[bl[2],bl[3]]])     #quindi h è una tra H1,...H4
+a=checkflip(g@H1@la.inv(g))                   #ora controllo quale fra H1,...,H4 sono uguali (flippano o no)
+if a==checkflip(g@H2@la.inv(g)):
+    h1,h2=H1,H3
+else:
+    h1,h2=H1,H2
 
 #Third generator
 
 K1,K2,K3,K4=mappa(F,H,I,Z6,M,F,H,D,Z3,Id)
 k1=np.block([[K1,K2],[K3,K4]])
+
+
+
+
+
+
 
 
 
