@@ -169,23 +169,24 @@ c2=4
 d1=8
 d2=5
 
-S1=special_ortho_group.rvs(dim=2)    #generates random matrix in SO(2)
-S2=special_ortho_group.rvs(dim=2)
+alpha1=math.pi/4 #first angle
+alpha2=math.pi/5 #second angle
 
-r1,r2,r3,r4=1,0,0,1
+S1= np.array([[math.cos(alpha1/2),-math.sin(alpha1/2)],[math.sin(alpha1/2),math.cos(alpha1/2)]])
+S2= np.array([[math.cos(alpha2/2),-math.sin(alpha2/2)],[math.sin(alpha2/2),math.cos(alpha2/2)]])
+
+r1,r2,r3,r4=0,0,1,0
 
 #First yellow hexagon
 
+Id=np.identity(2)  
+C=np.array([[math.exp(c1),0],[0,math.exp(c2)]])
 
 if r1==0:
-    Id=np.identity(2)  
-    C=np.array([[math.exp(c1),0],[0,math.exp(c2)]])
     A=ProblemaL1(b1,b2,c1,c2,S1,Id,C)
     D=ProblemaL2(c1,c2,d1,d2,S2,Id,C)
     Z1,Z2=OrthTube(A@A,Id,C,D@la.inv(C)@D)
 if r1==1:
-    Id=np.identity(2)  
-    C=np.array([[math.exp(c1),0],[0,math.exp(c2)]])
     A=ProblemaL1(b1,b2,c1,c2,ribalta(S1),Id,C)
     D=ProblemaL2(c1,c2,d1,d2,ribalta(S2),Id,C)
     Z1,Z2=OrthTube(A@A,Id,C,D@la.inv(C)@D)
@@ -238,10 +239,8 @@ if r4==1:
 
 
 
-
-print(X1)
-print(X2)
-print(X3)
-print(X4)
-
-
+print(r1,r2,r3,r4)
+print('A=',A)
+print('E=',E)
+print('G=',G)
+print('X1=',X1)
