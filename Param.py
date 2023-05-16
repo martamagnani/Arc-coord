@@ -91,6 +91,21 @@ def conjugating_mat(M,N): #takes M,N symm of same ev returns P,Q in SO(2) and O(
     P2,Q2=diagonalizing_mat(N)
     return P2.T@P1,P2.T@Q1
 
+def findmaps(B,C,D,E,F,A):   #finds the two maps h such that h(B,E,F,D)=(B,E,A,C)
+    Id=np.identity(2)    
+    g=np.block([[la.inv(E-B),Id-la.inv(E-B)@E],[-Id,E]]) 
+    M=sqrtmatrix((E-D)@la.inv(D-B)@(E-B))@la.inv(E-F)@(B-F)@la.inv(E-B)@sqrtmatrix((E-D)@la.inv(D-B)@(E-B))
+    N=sqrtmatrix((E-C)@la.inv(C-B)@(E-B))@la.inv(E-A)@(B-A)@la.inv(E-B)@sqrtmatrix((E-C)@la.inv(C-B)@(E-B))
+    P,Q=conjugating_mat(M,N)
+    G1=sqrtmatrix(la.inv(E-C)@(C-B)@la.inv(E-B))@P@sqrtmatrix((E-D)@la.inv(D-B)@(E-B))
+    G2=sqrtmatrix(la.inv(E-C)@(C-B)@la.inv(E-B))@Q@sqrtmatrix((E-D)@la.inv(D-B)@(E-B))
+    s=(2,2)
+    Z=np.zeros(s)
+    h1=np.block([[G1,Z],[Z,la.inv(G1.T)]])
+    h2=np.block([[G2,Z],[Z,la.inv(G2.T)]])
+    return la.inv(g)@h1@g,la.inv(g)@h2@g  #the first map is the one reversing
+
+
 def Sp4_Action(A,B,C,D,Z):  
     return (A@Z+B)@la.inv(C@Z+D)
 
@@ -142,35 +157,6 @@ def ribalta(S):
     J=np.array([[-1,0],[0,1]])
     return J@S@J
 
-def prova(A1,B1,C1,D1,E1,A2,B2,C2,D2,E2):  #finds blocks of four matrices obtained by calculations IPad
-    X1=la.inv(A1-C1)-la.inv(A1-B1)
-    Y1=la.inv(A1-D1)-la.inv(A1-B1)
-    P1,Q1=diagonalizing_mat(la.inv(sqrtmatrix(X1))@Y1@la.inv(sqrtmatrix(X1)))
-    X2=la.inv(A2-C2)-la.inv(A2-B2)
-    Y2=la.inv(A2-D2)-la.inv(A2-B2)
-    P2,Q2=diagonalizing_mat(la.inv(sqrtmatrix(X2))@Y2@la.inv(sqrtmatrix(X2)))
-    R1=P1@la.inv(sqrtmatrix(X1))@la.inv(A1-B1)#but since not exactly diagonal check >/<0 to be more precise in the choise of P/Q to go up
-    R2=P1@la.inv(sqrtmatrix(X1))@(Id-la.inv(A1-B1)@A1)
-    R3=-P1@sqrtmatrix(X1)
-    R4=P1@sqrtmatrix(X1)@A1  
-    S1=Q1@la.inv(sqrtmatrix(X1))@la.inv(A1-B1)#but since not exactly diagonal check >/<0 to be more precise in the choise of P/Q to go up
-    S2=Q1@la.inv(sqrtmatrix(X1))@(Id-la.inv(A1-B1)@A1)
-    S3=-Q1@sqrtmatrix(X1)
-    S4=Q1@sqrtmatrix(X1)@A1  
-    H1=A2@sqrtmatrix(X2)@P2.T
-    H2=(A2@la.inv(A2-B2)-Id)@la.inv(sqrtmatrix(X2))@P2.T
-    H3=sqrtmatrix(X2)@P2.T
-    H4=la.inv(A2-B2)@la.inv(sqrtmatrix(X2))@P2.T
-    G1=A2@sqrtmatrix(X2)@Q2.T
-    G2=(A2@la.inv(A2-B2)-Id)@la.inv(sqrtmatrix(X2))@Q2.T
-    G3=sqrtmatrix(X2)@Q2.T
-    G4=la.inv(A2-B2)@la.inv(sqrtmatrix(X2))@Q2.T
-    h1=multmat(H1,H2,H3,H4,R1,R2,R3,R4)  #note first the H matrix
-    h2=multmat(H1,H2,H3,H4,S1,S2,S3,S4) 
-    h3=multmat(G1,G2,G3,G4,R1,R2,R3,R4) 
-    h4=multmat(G1,G2,G3,G4,S1,S2,S3,S4)
-    return h1,h2,h3,h4
-
 
 #Parameters for a pair of pants (three vectorial lengths and two angles per hexagon)
 
@@ -178,7 +164,7 @@ b1=9
 b2=3
 
 c1=7
-c2=2
+c2=4
 
 d1=8
 d2=5
@@ -186,11 +172,11 @@ d2=5
 S1=special_ortho_group.rvs(dim=2)    #generates random matrix in SO(2)
 S2=special_ortho_group.rvs(dim=2)
 
+r1,r2,r3,r4=1,0,0,1
+
+#First yellow hexagon
 
 
-#Primo esagono giallo
-
-r1=0  
 if r1==0:
     Id=np.identity(2)  
     C=np.array([[math.exp(c1),0],[0,math.exp(c2)]])
@@ -204,21 +190,21 @@ if r1==1:
     D=ProblemaL2(c1,c2,d1,d2,ribalta(S2),Id,C)
     Z1,Z2=OrthTube(A@A,Id,C,D@la.inv(C)@D)
 
-#Secondo esagono verde
+#First green hexagon
 
-r2=0
+
 if r2==0:
-        E=ProblemaL2(d1,d2,c1,c2,S1,D,D@la.inv(C)@D)    
-        F=ProblemaL2(c1,c2,b1,b2,S2,D@la.inv(C)@D,E)    
+        E=ProblemaL2(d1,d2,c1,c2,S2,D,D@la.inv(C)@D)    
+        F=ProblemaL2(c1,c2,b1,b2,S1,D@la.inv(C)@D,E)    
         Z3,Z4=OrthTube(C,D@la.inv(C)@D,E,F@la.inv(E)@F)
 if r2==1:
     E=ProblemaL2(d1,d2,c1,c2,ribalta(S2),D,D@la.inv(C)@D)    
     F=ProblemaL2(c1,c2,b1,b2,ribalta(S1),D@la.inv(C)@D,E)    
     Z3,Z4=OrthTube(C,D@la.inv(C)@D,E,F@la.inv(E)@F)
 
-#Terzo esagono giallo
+#Second yellow hexagon
 
-r3=0
+
 if r3==0:
     G=ProblemaL2(b1,b2,c1,c2,S1,F,F@la.inv(E)@F)
     H=ProblemaL2(c1,c2,d1,d2,S2,F@la.inv(E)@F,G)
@@ -229,29 +215,12 @@ if r3==1:
     Z5,Z6=OrthTube(E,F@la.inv(E)@F,G,H@la.inv(G)@H)
 
 
-M1,M2,M3,M4=prova(C,D@la.inv(C)@D,E,Z4,F@la.inv(E)@F,C,D@la.inv(C)@D,A@A,Z1,Id)  #Ognuna sono i quattro blocchi di una matrice che manda (C,DC^{-1}D,E,Z4,FE^{-1}F) in (C,DC^{-1}D,A^{2},Z1,Id) 
-H1=np.block([[M1[0],M1[1]],[M1[2],M1[3]]])   #coincideranno a due a due e saranno h1 e h2  QUESTO SEMPRE h1
-H2=np.block([[M2[0],M2[1]],[M2[2],M2[3]]])
-H3=np.block([[M3[0],M3[1]],[M3[2],M3[3]]])
-H4=np.block([[M4[0],M4[1]],[M4[2],M4[3]]])
-bl=conj(D@la.inv(C)@D,C)                                 #blocchi di una matrice g| ghg^{-1} fissa {0},infty} dove h fissa {DC^{-1}D,C}
-g=np.block([[bl[0],bl[1]],[bl[2],bl[3]]])     #quindi h è una tra H1,...H4
-a=checkflip(g@H1@la.inv(g))                   #ora controllo quale fra H1,...,H4 sono uguali (flippano o no)
-if a==checkflip(g@H2@la.inv(g)):
-   if checkflipgen(M1[0],M1[1],M1[2],M1[3],D@la.inv(C)@D,C) ==1:
-       h1,h2=H1,H3
-   else:
-       h2,h1=H1,H3 
-else:
-   if checkflipgen(M1[0],M1[1],M1[2],M1[3],D@la.inv(C)@D,C) ==1:
-       h1,h2=H1,H2
-   else:
-        h2,h1=H1,H2
-
-#ora h1 si chiama quello che non ribalta, h2 quello che ribalta
 
 
-r4=0
+#Second green hexagon
+h1,h2=findmaps(C,Z2,Z3,D@la.inv(C)@D,E,A@A)
+
+
 if r4==0:
     B1,B2,B3,B4=extractblocks(h1)
     X1=Sp4_Action(B1, B2, B3, B4, F)
@@ -270,9 +239,9 @@ if r4==1:
 
 
 
-
-
-
-
+print(X1)
+print(X2)
+print(X3)
+print(X4)
 
 
