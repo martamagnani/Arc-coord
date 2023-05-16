@@ -251,7 +251,7 @@ H1=np.block([[M1[0],M1[1]],[M1[2],M1[3]]])   #coincideranno a due a due e sarann
 H2=np.block([[M2[0],M2[1]],[M2[2],M2[3]]])
 H3=np.block([[M3[0],M3[1]],[M3[2],M3[3]]])
 H4=np.block([[M4[0],M4[1]],[M4[2],M4[3]]])
-bl=conj(Id,D)                                 #blocchi di una matrice g| ghg^{-1} fissa {0},infty} dove h fissa {Id,D}
+bl=conj(D,Id)                                 #blocchi di una matrice g| ghg^{-1} fissa {0,infty} dove h fissa {D,Id} (prima D di Id solo così mappa "sale" sul tubo)
 g=np.block([[bl[0],bl[1]],[bl[2],bl[3]]])     #quindi h è una tra H1,...H4
 a=checkflip(g@H1@la.inv(g))                   #ora controllo quale fra H1,...,H4 sono uguali (flippano o no)
 if a==checkflip(g@H2@la.inv(g)):
