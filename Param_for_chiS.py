@@ -167,7 +167,7 @@ S1= np.array([[math.cos(alpha1/2),-math.sin(alpha1/2)],[math.sin(alpha1/2),math.
 S2= np.array([[math.cos(alpha2/2),-math.sin(alpha2/2)],[math.sin(alpha2/2),math.cos(alpha2/2)]])
 
 
-#Check that F_c1 different from F_c2, otherwise change c1,c2
+#Check that F_c1 different from F_c2, if the case change c1,c2
 F_c1,F_c2=maleficmapF(b1, b2, c1, c2, d1, d2, alpha1, alpha2)
 
 
