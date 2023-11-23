@@ -10,22 +10,22 @@ Created on Mon Nov 20 10:26:50 2023
 import numpy as np
 from numpy import linalg as la
 import math
-from scipy.stats import special_ortho_group
+
 
 
 def sqrtmatrix(M):  #Returns square root of a positive definite matrix
     eigvals,eigvecs=la.eig(M)
     eigvals=eigvals.real
     S=eigvecs              #columns are orthonormal eigenvectors of M
-    s0=math.sqrt(eigvals[0])
-    s1=math.sqrt(eigvals[1])
-    D=np.array([[s0,0],[0,s1]]) 
+    s_0=math.sqrt(eigvals[0])
+    s_1=math.sqrt(eigvals[1])
+    D=np.array([[s_0,0],[0,s_1]]) 
     return S@D@S.T
 
 def diagonalizing_mat(M): #takes M symm returns P,Q in SO(2) and O(2)\SO(2) resp. such that P@M@P.T and Q@M@Q.T diagonal with first eigenvalue > second
     eigvals,eigvecs=la.eig(M)
     L=eigvecs      #columns are orthonormal eigenvectors of M
-    if eigvals[0]<eigvals[1]:  #if first eigenvalue smaller then the second I swap columns of L (now first col rel to bigger ev)
+    if eigvals[0]<eigvals[1]:  #if first eigenvalue smaller then the second I swap columns of L (first column relative to greater eigenvalue)
         l=[1,0]  
         L=L[:,l]  
     J=np.array([[-1,0],[0,1]])
@@ -76,10 +76,10 @@ def Stand4uple(A,B,C,D):    #returns blocks of a matrix g in Sp(4,R) such that g
     B4=P@sqrtmatrix(X)@D
     return B1,B2,B3,B4
 
-def multmat(B1,B2,B3,B4,C1,C2,C3,C4): #given blocks of two matrices,retunrs blocks of the matrix obtained by multiplying them
+def multmat(B1,B2,B3,B4,C1,C2,C3,C4): #given blocks of two matrices,returns blocks of the matrix obtained by multiplying them
     return B1@C1+B2@C3,B1@C2+B2@C4,B3@C1+B4@C3,B3@C2+B4@C4
 
-def mult3mat(B1,B2,B3,B4,C1,C2,C3,C4,D1,D2,D3,D4): #given blocks of three matrices,retunrs blocks of the matrix obtained by multiplying them
+def mult3mat(B1,B2,B3,B4,C1,C2,C3,C4,D1,D2,D3,D4): #given blocks of three matrices,returns blocks of the matrix obtained by multiplying them
     A1,A2,A3,A4=multmat(C1,C2,C3,C4,D1,D2,D3,D4)
     return multmat(B1, B2, B3, B4, A1, A2, A3, A4)
 
@@ -119,34 +119,63 @@ def checkflipgen(A,B,C,D,X,Y): #takes 4 blocks of h in Stab(X,Y) and checks if i
             return 1
      if la.det(A)<0:
         return -1    
+    
+def CrossRatio(X1,X2,X3,X4):
+    R=la.inv(X1-X2)@(X4-X2)@la.inv(X4-X3)@(X1-X3)
+    return  R    
 
+
+def Hexagon(b1,b2,c1,c2,d1,d2,alpha1,alpha2):
+    S1= np.array([[math.cos(alpha1/2),-math.sin(alpha1/2)],[math.sin(alpha1/2),math.cos(alpha1/2)]])
+    S2= np.array([[math.cos(alpha2/2),-math.sin(alpha2/2)],[math.sin(alpha2/2),math.cos(alpha2/2)]])
+    Id=np.identity(2)  
+    C=np.array([[math.exp(c1),0],[0,math.exp(c2)]])  
+    A=ProblemaL1(b1,b2,c1,c2,S1,Id,C)
+    D=ProblemaL2(c1,c2,d1,d2,S2,Id,C)
+    return A,C,D
+
+def maleficmapF(b1,b2,c1,c2,d1,d2,alpha1,alpha2):
+    A,C,D=Hexagon(b1,b2,c1,c2,d1,d2,alpha1,alpha2)
+    Id=np.identity(2)
+    R=CrossRatio(A, Id, C, D@la.inv(C)@D)
+    e1,e2=ord_eigvals(R)
+    return math.log(e1),math.log(e2)
+    
+    
+    
+      
 #Length parameters b,c,d:
     
 b1=9
-b2=3
+b2=0.3
 
 c1=7
-c2=4
+c2=0.3
 
-d1=8
-d2=5
+d1=13
+d2=0.9
 
 
 #Angle parameters alpha1,alpha2: 
     
-alpha1=math.pi/4 
-alpha2=math.pi/5 
+alpha1=math.pi 
+alpha2=math.pi
 
 #Matrix expression of angle parameters:
     
 S1= np.array([[math.cos(alpha1/2),-math.sin(alpha1/2)],[math.sin(alpha1/2),math.cos(alpha1/2)]])
 S2= np.array([[math.cos(alpha2/2),-math.sin(alpha2/2)],[math.sin(alpha2/2),math.cos(alpha2/2)]])
 
+
+F_c1,F_c2=maleficmapF(b1, b2, c1, c2, d1, d2, alpha1, alpha2)
+
+
+
 #Parameters in K in the case where the  hexagon is non-generic: 1=R_st, -1=R_ex
 
-R1=1
-R2=-1
-R3=1
+R1=-1
+R2=1
+R3=-1
 
 
 #Construction of hexagon with arc coordinates (b,c,dalpha1,alpha2):
@@ -185,11 +214,11 @@ if R3==1:
 if R1==-1:
     D1,D2,D3,D4=mult3mat(N4.T, -N2.T, -N3.T, N1.T, -r, Z, Z, r, N1, N2, N3, N4)    
     
-#Blocks of the first generator    
+#Blocks of the first generator g   
 g1,g2,g3,g4=multmat(B1, B2, B3, B4, C1, C2, C3, C4) 
 #g=np.block([[g1,g2],[g3,g4]])
 
-#Blocks of the second generator
+#Blocks of the second generator h
 h1,h2,h3,h4=multmat(C1, C2, C3, C4, D1, D2, D3, D4)    
 #h=np.block([[h1,h2],[h3,h4]])    
     
